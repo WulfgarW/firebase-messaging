@@ -109,6 +109,10 @@ class FcmPushClientConfig:  # pylint:disable=too-many-instance-attributes
     reset_interval: float = 3
     """Time in seconds to wait between resets after errors or disconnection."""
 
+    max_wait_in_listen_for_reset: int = 200 
+    # 200 is suitable for connection_retry_count=5 and seconds_before_retry_connect=3
+    """Time in seconds to wait in _listen() for a _reset() to succeed."""
+
     heartbeat_ack_timeout: float = 5
     """Time in seconds to wait for a heartbeat ack before resetting."""
 
@@ -683,7 +687,24 @@ class FcmPushClient:  # pylint:disable=too-many-instance-attributes
             while self.do_listen:
                 try:
                     if self.run_state == FcmPushClientRunState.RESETTING:
-                        await asyncio.sleep(1)
+                        counter = 0
+                        while (
+                            counter < FcmPushClientConfig.max_wait_in_listen_for_reset
+                            and (
+                                self.run_state == FcmPushClientRunState.RESETTING
+                                or self.run_state
+                                == FcmPushClientRunState.STARTING_CONNECTION
+                            )
+                        ):
+                            if (counter > 0) and (counter % 10 == 0):
+                                _logger.debug("Listen is waiting for reset to "
+                                f"succeed. Already slept for {counter}s, and "
+                                f"run state is still {self.run_state}.")
+                            counter = counter + 1
+                            await asyncio.sleep(1)
+                        _logger.info(
+                            f"In total listen waited {counter}s for reset "
+                            f"to succeed: run state is now {self.run_state}.")
                     elif msg := await self._receive_msg():
                         await self._handle_message(msg)
 
