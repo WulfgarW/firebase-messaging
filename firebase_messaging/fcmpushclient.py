@@ -110,7 +110,6 @@ class FcmPushClientConfig:  # pylint:disable=too-many-instance-attributes
     """Time in seconds to wait between resets after errors or disconnection."""
 
     max_wait_in_listen_for_reset: int = 200
-    # 200 is suitable for connection_retry_count=5 and seconds_before_retry_connect=3
     """Time in seconds to wait in _listen() for a _reset() to succeed."""
 
     heartbeat_ack_timeout: float = 5
