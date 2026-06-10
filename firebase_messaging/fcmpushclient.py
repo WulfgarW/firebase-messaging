@@ -686,7 +686,10 @@ class FcmPushClient:  # pylint:disable=too-many-instance-attributes
 
             while self.do_listen:
                 try:
-                    if self.run_state == FcmPushClientRunState.RESETTING:
+                    if self.run_state in (
+                        FcmPushClientRunState.RESETTING,
+                        FcmPushClientRunState.STARTING_CONNECTION,
+                    ):
                         counter = 0
                         while counter < self.config.max_wait_in_listen_for_reset and (
                             self.run_state == FcmPushClientRunState.RESETTING
